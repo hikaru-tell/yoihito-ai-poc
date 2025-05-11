@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { generateText } from 'ai';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { accountMaster, taxMaster } from './masters';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 export async function POST(req: Request) {
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
 【重要】勘定科目は必ず下記の勘定科目マスタから選択してください。マスタにないものは絶対に使わないでください。
 【重要】税率は必ず下記の税率マスタデータから選択してください。マスタデータにないものは絶対に使わないでください。
 【重要】借方と貸方で同じ情報（取引先名や税率など）が使える場合は、同じ値をセットしてください。
+【重要】会計仕訳とは関係ない質問には「会計仕訳とは関係ありません」と答えてください。
 
 【勘定科目マスタ】
 ${accountMaster}
@@ -59,16 +61,22 @@ ${csvData}
     if (systemPrompt) {
       enhancedSystemPrompt = systemPrompt + '\n' + enhancedSystemPrompt;
     }
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const { text } = await generateText({
+      model: openrouter('openai/gpt-4o'),
       messages: [
         { role: "system", content: enhancedSystemPrompt },
         ...messages
-      ],
+      ]
     });
 
-    return NextResponse.json({ message: completion.choices[0].message.content });
+    // textがPromiseの場合はawaitで解決
+    const resolvedText = typeof text === 'string' ? text : await text;
+    let safeText = resolvedText;
+    if (typeof safeText !== 'string') {
+      safeText = JSON.stringify(safeText);
+    }
+
+    return NextResponse.json({ message: safeText });
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json(
