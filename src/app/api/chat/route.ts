@@ -5,6 +5,32 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { accountMaster, taxMaster } from './masters';
 
+// OpenRouterで使える代表的なモデル名一覧
+// 詳細・最新は https://openrouter.ai/docs#models を参照
+//
+// - openai/gpt-4o
+// - openai/gpt-4-turbo
+// - openai/gpt-4-turbo-2024-04-09
+// - openai/gpt-4-32k
+// - openai/gpt-3.5-turbo
+// - anthropic/claude-3-opus
+// - anthropic/claude-3-sonnet
+// - anthropic/claude-3-haiku
+// - google/gemini-pro
+// - meta-llama/llama-3-70b-instruct
+// - meta-llama/llama-3-8b-instruct
+// - mistralai/mixtral-8x7b-instruct
+// - mistralai/mistral-large
+// - meta-llama/llama-2-70b-chat
+// - meta-llama/llama-2-13b-chat
+// - meta-llama/llama-2-7b-chat
+// - cohesion/command-r-plus
+// - nousresearch/nous-capybara-7b
+// - google/gemini-pro         // Gemini 1.0相当のテキストモデル
+// - google/gemini-pro-vision  // Gemini 1.0相当の画像対応モデル
+// - openai/gpt-4-vision-preview
+// ...他にも多数
+
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
