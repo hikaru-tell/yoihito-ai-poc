@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRecorder } from '@/hooks/useRecorder';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -23,6 +24,7 @@ export default function Chat() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { isRecording, transcript, error, toggleRecording, setTranscript } = useRecorder();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -31,6 +33,15 @@ export default function Chat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    // 音声認識テキストが新たに取得されたらinputに反映するだけ
+    if (transcript) {
+      setInput(transcript);
+      setTranscript(''); // transcriptはクリア
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transcript]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -203,6 +214,12 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </div>
       <div className="border-t bg-white p-4">
+        {/* 音声認識の状態表示 */}
+        <div className="mb-2 min-h-[24px] text-sm">
+          {isRecording && <span className="text-red-500">● 録音中...</span>}
+          {!isRecording && transcript && <span className="text-green-600">認識結果: {transcript}</span>}
+          {error && <span className="text-red-500">エラー: {error}</span>}
+        </div>
         <form onSubmit={handleSubmit} className="flex gap-2 max-w-4xl mx-auto">
           <input
             type="text"
@@ -237,6 +254,17 @@ export default function Chat() {
                 <span>送信</span>
               </>
             )}
+          </button>
+          <button
+            type="button"
+            onClick={toggleRecording}
+            className={`px-3 py-3 rounded-lg flex items-center justify-center ${isRecording ? 'bg-red-200' : 'bg-gray-100 hover:bg-gray-200'} text-gray-600 transition-colors`}
+            disabled={isLoading}
+            aria-label="音声入力"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75v1.5m0 0a6 6 0 0 1-6-6m6 6a6 6 0 0 0 6-6m-6 6V21m3-9a3 3 0 1 1-6 0V6a3 3 0 1 1 6 0v6z" />
+            </svg>
           </button>
         </form>
       </div>
